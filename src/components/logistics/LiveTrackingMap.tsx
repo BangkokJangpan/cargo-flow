@@ -138,33 +138,33 @@ const LiveTrackingMap = () => {
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-1">
-                  👤 {vehicle.driverName}
+                  👤 {vehicle.driverName || `드라이버ID: ${vehicle.driver_id}`}
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
-                  📍 {vehicle.location?.address || "주소 정보 없음"}
+                  📍 {vehicle.currentLocation || "주소 정보 없음"}
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
-                  🎯 {vehicle.destination}
+                  🎯 {vehicle.destination || "목적지 정보 없음"}
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>💨 {vehicle.speed}km/h</span>
+                  <span>💨 {vehicle.speed !== undefined ? vehicle.speed : "0"}km/h</span>
                   <span>
-                    {vehicle.estimatedArrival !== "완료" ? (
+                    {vehicle.created_at ? (
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Date(vehicle.estimatedArrival).toLocaleTimeString()}
+                        {new Date(vehicle.created_at).toLocaleDateString()}
                       </span>
                     ) : (
-                      <span className="text-green-600 font-medium">✅ 완료</span>
+                      <span className="text-gray-400">날짜 정보 없음</span>
                     )}
                   </span>
                 </div>
                 
                 <div className="text-xs text-slate-500 mt-1">
-                  📦 {vehicle.cargoInfo}
+                  📦 {vehicle.vehicleType} / {vehicle.capacity}kg
                 </div>
 
                 {selectedVehicle === vehicle.id && (

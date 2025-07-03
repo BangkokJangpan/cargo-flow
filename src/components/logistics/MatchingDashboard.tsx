@@ -110,18 +110,18 @@ const MatchingDashboard = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-slate-600 mb-1">
-                        <span className="font-medium">출발:</span> {item.origin}
+                        <span className="font-medium">출발:</span> {item.origin || "정보 없음"}
                       </p>
                       <p className="text-slate-600">
-                        <span className="font-medium">도착:</span> {item.destination}
+                        <span className="font-medium">도착:</span> {item.destination || "정보 없음"}
                       </p>
                     </div>
                     <div>
                       <p className="text-slate-600 mb-1">
-                        <span className="font-medium">화물:</span> {item.cargoType} • {item.weight}kg
+                        <span className="font-medium">화물:</span> {item.cargoType || "-"} • {item.weight !== undefined ? `${item.weight}kg` : "-"}
                       </p>
                       <p className="text-slate-600">
-                        <span className="font-medium">요청시간:</span> {new Date(item.requestTime).toLocaleString()}
+                        <span className="font-medium">요청시간:</span> {item.requestTime ? new Date(item.requestTime).toLocaleString() : "정보 없음"}
                       </p>
                     </div>
                   </div>
@@ -129,7 +129,7 @@ const MatchingDashboard = () => {
                   {item.status === "매칭완료" && (
                     <div className="mt-3 pt-3 border-t border-slate-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-green-600 font-medium">✅ 매칭된 차량: V-102 (송중기)</span>
+                        <span className="text-sm text-green-600 font-medium">✅ 매칭된 차량: {item.matchedVehicleId || "-"} {item.matchedDriverName ? `(${item.matchedDriverName})` : ""}</span>
                         <Button size="sm" variant="outline">매칭 상세보기</Button>
                       </div>
                     </div>
@@ -164,17 +164,17 @@ const MatchingDashboard = () => {
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
-                  👤 {vehicle.driverName} • {vehicle.vehicleType}
+                  👤 {vehicle.driverName || `드라이버ID: ${vehicle.driver_id}`} • {vehicle.vehicleType}
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
-                  📍 {vehicle.currentLocation}
+                  📍 {vehicle.currentLocation || "주소 정보 없음"}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
-                  <div>용량: {vehicle.capacity}kg</div>
-                  <div>거리: {vehicle.distance}km</div>
-                  <div>도착: {vehicle.estimatedArrival}분</div>
+                  <div>용량: {vehicle.capacity ? `${vehicle.capacity}kg` : "정보 없음"}</div>
+                  <div>거리: {vehicle.distance !== undefined ? `${vehicle.distance}km` : "정보 없음"}</div>
+                  <div>도착: {vehicle.estimatedArrival !== undefined ? `${vehicle.estimatedArrival}분` : "정보 없음"}</div>
                   <div>
                     <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
                       활용가능
