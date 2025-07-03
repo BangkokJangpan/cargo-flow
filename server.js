@@ -6,7 +6,7 @@ const port = 3001;
 app.use(express.json());
 
 // DB 연결
-const db = new sqlite3.Database('./cargo_flow.db');
+const db = new sqlite3.Database('d:/workspace/cargo-flow/cargo_flow.db');
 
 // 1. 전체 배송 목록 조회
 app.get('/api/shipments', (req, res) => {
@@ -18,9 +18,11 @@ app.get('/api/shipments', (req, res) => {
 
 // 2. 배송 1건 조회
 app.get('/api/shipments/:id', (req, res) => {
-  db.get('SELECT * FROM shipments WHERE id = ?', [req.params.id], (err, row) => {
+  db.get('SELECT * FROM shipments WHERE shipment_id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(row);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    const { shipment_id, ...rest } = row;
+    res.json(rest);
   });
 });
 
@@ -28,12 +30,12 @@ app.get('/api/shipments/:id', (req, res) => {
 app.post('/api/shipments', (req, res) => {
   const s = req.body;
   db.run(
-    `INSERT INTO shipments (id, shipper, origin, destination, cargoType, weight, volume, status, requestedTime, estimatedCost, specialInstructions, isUrgent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [s.id, s.shipper, s.origin, s.destination, s.cargoType, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent],
+    `INSERT INTO shipments (shipper, origin, destination, cargoType, weight, volume, status, requestedTime, estimatedCost, specialInstructions, isUrgent)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.shipper, s.origin, s.destination, s.cargoType, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: s.id });
+      res.json({ success: true });
     }
   );
 });
@@ -43,7 +45,7 @@ app.put('/api/shipments/:id', (req, res) => {
   const s = req.body;
   db.run(
     `UPDATE shipments SET shipper=?, origin=?, destination=?, cargoType=?, weight=?, volume=?, status=?, requestedTime=?, estimatedCost=?, specialInstructions=?, isUrgent=?
-     WHERE id=?`,
+     WHERE shipment_id=?`,
     [s.shipper, s.origin, s.destination, s.cargoType, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
@@ -54,7 +56,7 @@ app.put('/api/shipments/:id', (req, res) => {
 
 // 5. 배송 삭제
 app.delete('/api/shipments/:id', (req, res) => {
-  db.run('DELETE FROM shipments WHERE id = ?', [req.params.id], function (err) {
+  db.run('DELETE FROM shipments WHERE shipment_id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ deleted: this.changes });
   });
@@ -146,13 +148,13 @@ app.delete('/api/drivers/:id', (req, res) => {
 
 // === vehicles CRUD ===
 app.get('/api/vehicles', (req, res) => {
-  db.all('SELECT * FROM vehicles', [], (err, rows) => {
+  db.all('SELECT driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 app.get('/api/vehicles/:id', (req, res) => {
-  db.get('SELECT * FROM vehicles WHERE id = ?', [req.params.id], (err, row) => {
+  db.get('SELECT driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles WHERE vehicle_id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(row);
   });
@@ -160,19 +162,19 @@ app.get('/api/vehicles/:id', (req, res) => {
 app.post('/api/vehicles', (req, res) => {
   const v = req.body;
   db.run(
-    `INSERT INTO vehicles (id, driver_id, company_id, number, vehicleType, capacity, currentLocation, rating, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [v.id, v.driver_id, v.company_id, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at],
+    `INSERT INTO vehicles (driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [v.driver_id, v.shipper, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: v.id });
+      res.json({ vehicle_id: this.lastID });
     }
   );
 });
 app.put('/api/vehicles/:id', (req, res) => {
   const v = req.body;
   db.run(
-    `UPDATE vehicles SET driver_id=?, company_id=?, number=?, vehicleType=?, capacity=?, currentLocation=?, rating=?, status=?, created_at=? WHERE id=?`,
-    [v.driver_id, v.company_id, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at, req.params.id],
+    `UPDATE vehicles SET driver_id=?, shipper=?, number=?, vehicleType=?, capacity=?, currentLocation=?, rating=?, status=?, created_at=? WHERE vehicle_id=?`,
+    [v.driver_id, v.shipper, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -180,7 +182,7 @@ app.put('/api/vehicles/:id', (req, res) => {
   );
 });
 app.delete('/api/vehicles/:id', (req, res) => {
-  db.run('DELETE FROM vehicles WHERE id = ?', [req.params.id], function (err) {
+  db.run('DELETE FROM vehicles WHERE vehicle_id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ deleted: this.changes });
   });
@@ -244,8 +246,8 @@ app.get('/api/shipment_settlements/:id', (req, res) => {
 app.post('/api/shipment_settlements', (req, res) => {
   const s = req.body;
   db.run(
-    `INSERT INTO shipment_settlements (shipmentId, carrierId, driverId, route, baseFare, timeFare, weightFare, totalFare, platformFee, carrierAmount, completedDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [s.shipmentId, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status],
+    `INSERT INTO shipment_settlements (shipment_id, carrierId, driverId, route, baseFare, timeFare, weightFare, totalFare, platformFee, carrierAmount, completedDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.shipment_id, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ settlement_id: this.lastID });
@@ -255,8 +257,8 @@ app.post('/api/shipment_settlements', (req, res) => {
 app.put('/api/shipment_settlements/:id', (req, res) => {
   const s = req.body;
   db.run(
-    `UPDATE shipment_settlements SET shipmentId=?, carrierId=?, driverId=?, route=?, baseFare=?, timeFare=?, weightFare=?, totalFare=?, platformFee=?, carrierAmount=?, completedDate=?, status=? WHERE settlement_id=?`,
-    [s.shipmentId, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status, req.params.id],
+    `UPDATE shipment_settlements SET shipment_id=?, carrierId=?, driverId=?, route=?, baseFare=?, timeFare=?, weightFare=?, totalFare=?, platformFee=?, carrierAmount=?, completedDate=?, status=? WHERE settlement_id=?`,
+    [s.shipment_id, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -328,8 +330,8 @@ app.get('/api/matching_queue/:id', (req, res) => {
 app.post('/api/matching_queue', (req, res) => {
   const m = req.body;
   db.run(
-    `INSERT INTO matching_queue (shipmentId, urgency, requestTime, matchingScore, status, matchedVehicleId) VALUES (?, ?, ?, ?, ?, ?)`,
-    [m.shipmentId, m.urgency, m.requestTime, m.matchingScore, m.status, m.matchedVehicleId],
+    `INSERT INTO matching_queue (shipment_id, urgency, requestTime, matchingScore, status, matchedVehicleId) VALUES (?, ?, ?, ?, ?, ?)`,
+    [m.shipment_id, m.urgency, m.requestTime, m.matchingScore, m.status, m.matchedVehicleId],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ queue_id: this.lastID });
@@ -339,8 +341,8 @@ app.post('/api/matching_queue', (req, res) => {
 app.put('/api/matching_queue/:id', (req, res) => {
   const m = req.body;
   db.run(
-    `UPDATE matching_queue SET shipmentId=?, urgency=?, requestTime=?, matchingScore=?, status=?, matchedVehicleId=? WHERE queue_id=?`,
-    [m.shipmentId, m.urgency, m.requestTime, m.matchingScore, m.status, m.matchedVehicleId, req.params.id],
+    `UPDATE matching_queue SET shipment_id=?, urgency=?, requestTime=?, matchingScore=?, status=?, matchedVehicleId=? WHERE queue_id=?`,
+    [m.shipment_id, m.urgency, m.requestTime, m.matchingScore, m.status, m.matchedVehicleId, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -351,6 +353,14 @@ app.delete('/api/matching_queue/:id', (req, res) => {
   db.run('DELETE FROM matching_queue WHERE queue_id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ deleted: this.changes });
+  });
+});
+
+// === companies CRUD ===
+app.get('/api/companies', (req, res) => {
+  db.all('SELECT * FROM companies', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
   });
 });
 

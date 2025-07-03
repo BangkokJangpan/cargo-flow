@@ -212,10 +212,10 @@ const SettlementManager = () => {
             <CardContent>
               <div className="space-y-4">
                 {shipmentSettlements.map((settlement) => (
-                  <div key={settlement.shipmentId} className="p-4 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors">
+                  <div key={settlement.shipment_id} className="p-4 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{settlement.shipmentId}</Badge>
+                        <Badge variant="outline">{settlement.shipment_id}</Badge>
                         <Badge className={`text-xs ${getStatusColor(settlement.status)}`}>
                           {settlement.status}
                         </Badge>

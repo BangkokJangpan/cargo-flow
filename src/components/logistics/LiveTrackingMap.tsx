@@ -72,16 +72,16 @@ const LiveTrackingMap = () => {
               <p className="text-lg font-semibold text-slate-700 mb-2">실시간 지도 영역</p>
               <p className="text-sm text-slate-500 mb-4">Google Maps API 또는 Leaflet.js 통합</p>
               <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-                {activeVehicles.map((vehicle) => (
+                {activeVehicles.map((vehicle, idx) => (
                   <div 
-                    key={vehicle.id}
+                    key={vehicle.vehicle_id || idx}
                     className={`p-2 bg-white rounded-lg shadow-sm border-2 cursor-pointer transition-all ${
-                      selectedVehicle === vehicle.id ? 'border-blue-500 scale-105' : 'border-gray-200 hover:border-blue-300'
+                      selectedVehicle === vehicle.vehicle_id ? 'border-blue-500 scale-105' : 'border-gray-200 hover:border-blue-300'
                     }`}
-                    onClick={() => setSelectedVehicle(selectedVehicle === vehicle.id ? null : vehicle.id)}
+                    onClick={() => setSelectedVehicle(selectedVehicle === vehicle.vehicle_id ? null : vehicle.vehicle_id)}
                   >
                     <div className="text-2xl text-center mb-1">{getStatusIcon(vehicle.status)}</div>
-                    <div className="text-xs text-center font-medium">{vehicle.id}</div>
+                    <div className="text-xs text-center font-medium">{vehicle.vehicle_id}</div>
                     <div className="text-xs text-center text-gray-500">{vehicle.speed}km/h</div>
                   </div>
                 ))}
@@ -120,25 +120,25 @@ const LiveTrackingMap = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4 max-h-96 overflow-y-auto">
-            {activeVehicles.map((vehicle) => (
+            {activeVehicles.map((vehicle, idx) => (
               <div 
-                key={vehicle.id}
+                key={vehicle.vehicle_id || idx}
                 className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                  selectedVehicle === vehicle.id 
+                  selectedVehicle === vehicle.vehicle_id 
                     ? 'border-blue-500 bg-blue-50 shadow-md' 
                     : 'border-slate-200 bg-white hover:bg-slate-50'
                 }`}
-                onClick={() => setSelectedVehicle(selectedVehicle === vehicle.id ? null : vehicle.id)}
+                onClick={() => setSelectedVehicle(selectedVehicle === vehicle.vehicle_id ? null : vehicle.vehicle_id)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-semibold text-slate-800">{vehicle.id}</div>
+                  <div className="font-semibold text-slate-800">{vehicle.vehicle_id}</div>
                   <Badge className={`text-xs ${getStatusColor(vehicle.status)}`}>
                     {vehicle.status}
                   </Badge>
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-1">
-                  👤 {vehicle.driverName || `드라이버ID: ${vehicle.driver_id}`}
+                  👤 {`드라이버ID: ${vehicle.driver_id}`}
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
@@ -167,7 +167,7 @@ const LiveTrackingMap = () => {
                   📦 {vehicle.vehicleType} / {vehicle.capacity}kg
                 </div>
 
-                {selectedVehicle === vehicle.id && (
+                {selectedVehicle === vehicle.vehicle_id && (
                   <div className="mt-3 pt-3 border-t border-slate-200">
                     <div className="grid grid-cols-2 gap-2">
                       <Button size="sm" variant="outline" className="text-xs">

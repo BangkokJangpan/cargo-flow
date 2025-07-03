@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,8 +29,8 @@ const UpcomingDeliveries = ({ deliveries }: UpcomingDeliveriesProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {deliveries.map((delivery) => (
-            <div key={delivery.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+          {deliveries.map((delivery, idx) => (
+            <div key={delivery.id ? `delivery-${delivery.id}` : `delivery-idx-${idx}`} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline" className="text-xs">{delivery.id}</Badge>

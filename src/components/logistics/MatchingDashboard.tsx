@@ -20,6 +20,8 @@ const MatchingDashboard = () => {
     });
     axios.get("/api/vehicles").then(res => {
       setAvailableVehicles(Array.isArray(res.data) ? res.data : []);
+    }).catch(error => {
+      console.error("Failed to load vehicles: ", error);
     });
   }, []);
 
@@ -86,8 +88,8 @@ const MatchingDashboard = () => {
             )}
 
             <div className="space-y-4">
-              {matchingQueue.map((item) => (
-                <div key={item.id} className="p-4 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors">
+              {matchingQueue.map((item, idx) => (
+                <div key={item.id ? `queue-${String(item.id)}-${idx}` : `queue-idx-${idx}`} className="p-4 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">{item.id}</Badge>
@@ -153,10 +155,10 @@ const MatchingDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {availableVehicles.map((vehicle) => (
-              <div key={vehicle.id} className="p-3 border border-slate-200 rounded-lg bg-white hover:bg-blue-50 transition-colors">
+            {availableVehicles.map((vehicle, idx) => (
+              <div key={vehicle.vehicle_id ? `vehicle-${String(vehicle.vehicle_id)}-${idx}` : `vehicle-idx-${idx}`} className="p-3 border border-slate-200 rounded-lg bg-white hover:bg-blue-50 transition-colors">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-semibold text-slate-800">{vehicle.id}</div>
+                  <div className="font-semibold text-slate-800">{vehicle.vehicle_id}</div>
                   <div className="flex items-center gap-1">
                     <span className="text-yellow-500">⭐</span>
                     <span className="text-sm font-medium">{vehicle.rating}</span>
@@ -164,7 +166,7 @@ const MatchingDashboard = () => {
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
-                  👤 {vehicle.driverName || `드라이버ID: ${vehicle.driver_id}`} • {vehicle.vehicleType}
+                  👤 {`드라이버ID: ${vehicle.driver_id}`} • {vehicle.vehicleType}
                 </div>
                 
                 <div className="text-sm text-slate-600 mb-2">
