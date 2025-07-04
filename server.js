@@ -29,10 +29,13 @@ app.get('/api/shipments/:id', (req, res) => {
 // 3. 배송 등록
 app.post('/api/shipments', (req, res) => {
   const s = req.body;
+  // vehicle_id, driver_id가 undefined/null이면 0으로 대체
+  const vehicle_id = s.vehicle_id == null ? 0 : s.vehicle_id;
+  const driver_id = s.driver_id == null ? 0 : s.driver_id;
   db.run(
-    `INSERT INTO shipments (shipper, origin, destination, cargoType, weight, volume, status, requestedTime, estimatedCost, specialInstructions, isUrgent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [s.shipper, s.origin, s.destination, s.cargoType, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent],
+    `INSERT INTO shipments (carrier_id, origin, destination, cargo, weight, volume, status, requestedTime, estimatedCost, specialInstructions, isUrgent, vehicle_id, driver_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.carrier_id, s.origin, s.destination, s.cargo, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent, vehicle_id, driver_id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -43,10 +46,13 @@ app.post('/api/shipments', (req, res) => {
 // 4. 배송 수정
 app.put('/api/shipments/:id', (req, res) => {
   const s = req.body;
+  // vehicle_id, driver_id가 undefined/null이면 0으로 대체
+  const vehicle_id = s.vehicle_id == null ? 0 : s.vehicle_id;
+  const driver_id = s.driver_id == null ? 0 : s.driver_id;
   db.run(
-    `UPDATE shipments SET shipper=?, origin=?, destination=?, cargoType=?, weight=?, volume=?, status=?, requestedTime=?, estimatedCost=?, specialInstructions=?, isUrgent=?
+    `UPDATE shipments SET carrier_id=?, origin=?, destination=?, cargo=?, weight=?, volume=?, status=?, requestedTime=?, estimatedCost=?, specialInstructions=?, isUrgent=?, vehicle_id=?, driver_id=?
      WHERE shipment_id=?`,
-    [s.shipper, s.origin, s.destination, s.cargoType, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent, req.params.id],
+    [s.carrier_id, s.origin, s.destination, s.cargo, s.weight, s.volume, s.status, s.requestedTime, s.estimatedCost, s.specialInstructions, s.isUrgent, vehicle_id, driver_id, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -120,8 +126,8 @@ app.get('/api/drivers/:id', (req, res) => {
 app.post('/api/drivers', (req, res) => {
   const d = req.body;
   db.run(
-    `INSERT INTO drivers (name, phone, company_id, license_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    [d.name, d.phone, d.company_id, d.license_number, d.status, d.created_at],
+    `INSERT INTO drivers (name, phone, carrier_id, license_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [d.name, d.phone, d.carrier_id, d.license_number, d.status, d.created_at],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ driver_id: this.lastID });
@@ -131,8 +137,8 @@ app.post('/api/drivers', (req, res) => {
 app.put('/api/drivers/:id', (req, res) => {
   const d = req.body;
   db.run(
-    `UPDATE drivers SET name=?, phone=?, company_id=?, license_number=?, status=?, created_at=? WHERE driver_id=?`,
-    [d.name, d.phone, d.company_id, d.license_number, d.status, d.created_at, req.params.id],
+    `UPDATE drivers SET name=?, phone=?, carrier_id=?, license_number=?, status=?, created_at=? WHERE driver_id=?`,
+    [d.name, d.phone, d.carrier_id, d.license_number, d.status, d.created_at, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -148,13 +154,13 @@ app.delete('/api/drivers/:id', (req, res) => {
 
 // === vehicles CRUD ===
 app.get('/api/vehicles', (req, res) => {
-  db.all('SELECT driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles', [], (err, rows) => {
+  db.all('SELECT vehicle_id, carrier_id, driver_id, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 app.get('/api/vehicles/:id', (req, res) => {
-  db.get('SELECT driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles WHERE vehicle_id = ?', [req.params.id], (err, row) => {
+  db.get('SELECT vehicle_id, carrier_id, driver_id, number, vehicleType, capacity, currentLocation, rating, status, created_at FROM vehicles WHERE vehicle_id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(row);
   });
@@ -162,8 +168,8 @@ app.get('/api/vehicles/:id', (req, res) => {
 app.post('/api/vehicles', (req, res) => {
   const v = req.body;
   db.run(
-    `INSERT INTO vehicles (driver_id, shipper, number, vehicleType, capacity, currentLocation, rating, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [v.driver_id, v.shipper, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at],
+    `INSERT INTO vehicles (carrier_id, driver_id, number, vehicleType, capacity, currentLocation, rating, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [v.carrier_id, v.driver_id, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ vehicle_id: this.lastID });
@@ -173,8 +179,8 @@ app.post('/api/vehicles', (req, res) => {
 app.put('/api/vehicles/:id', (req, res) => {
   const v = req.body;
   db.run(
-    `UPDATE vehicles SET driver_id=?, shipper=?, number=?, vehicleType=?, capacity=?, currentLocation=?, rating=?, status=?, created_at=? WHERE vehicle_id=?`,
-    [v.driver_id, v.shipper, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at, req.params.id],
+    `UPDATE vehicles SET carrier_id=?, driver_id=?, number=?, vehicleType=?, capacity=?, currentLocation=?, rating=?, status=?, created_at=? WHERE vehicle_id=?`,
+    [v.carrier_id, v.driver_id, v.number, v.vehicleType, v.capacity, v.currentLocation, v.rating, v.status, v.created_at, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -204,11 +210,11 @@ app.get('/api/carriers/:id', (req, res) => {
 app.post('/api/carriers', (req, res) => {
   const c = req.body;
   db.run(
-    `INSERT INTO carriers (carrier_id, carrierName, contact, address, totalDeliveries, totalRevenue, platformFee, netAmount, status, settlementDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [c.carrier_id, c.carrierName, c.contact, c.address, c.totalDeliveries, c.totalRevenue, c.platformFee, c.netAmount, c.status, c.settlementDate],
+    `INSERT INTO carriers (carrierName, contact, address, totalDeliveries, totalRevenue, platformFee, netAmount, status, settlementDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [c.carrierName, c.contact, c.address, c.totalDeliveries, c.totalRevenue, c.platformFee, c.netAmount, c.status, c.settlementDate],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ carrier_id: c.carrier_id });
+      res.json({ carrier_id: this.lastID });
     }
   );
 });
@@ -246,8 +252,8 @@ app.get('/api/shipment_settlements/:id', (req, res) => {
 app.post('/api/shipment_settlements', (req, res) => {
   const s = req.body;
   db.run(
-    `INSERT INTO shipment_settlements (shipment_id, carrierId, driverId, route, baseFare, timeFare, weightFare, totalFare, platformFee, carrierAmount, completedDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [s.shipment_id, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status],
+    `INSERT INTO shipment_settlements (shipment_id, matched_vehicle_id, carrier_id, driver_id, route, baseFare, timeFare, weightFare, totalFare, platformFee, carrierAmount, completedDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.shipment_id, s.matched_vehicle_id, s.carrier_id, s.driver_id, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ settlement_id: this.lastID });
@@ -257,8 +263,8 @@ app.post('/api/shipment_settlements', (req, res) => {
 app.put('/api/shipment_settlements/:id', (req, res) => {
   const s = req.body;
   db.run(
-    `UPDATE shipment_settlements SET shipment_id=?, carrierId=?, driverId=?, route=?, baseFare=?, timeFare=?, weightFare=?, totalFare=?, platformFee=?, carrierAmount=?, completedDate=?, status=? WHERE settlement_id=?`,
-    [s.shipment_id, s.carrierId, s.driverId, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status, req.params.id],
+    `UPDATE shipment_settlements SET shipment_id=?, matched_vehicle_id=?, carrier_id=?, driver_id=?, route=?, baseFare=?, timeFare=?, weightFare=?, totalFare=?, platformFee=?, carrierAmount=?, completedDate=?, status=? WHERE settlement_id=?`,
+    [s.shipment_id, s.matched_vehicle_id, s.carrier_id, s.driver_id, s.route, s.baseFare, s.timeFare, s.weightFare, s.totalFare, s.platformFee, s.carrierAmount, s.completedDate, s.status, req.params.id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ updated: this.changes });
@@ -361,6 +367,49 @@ app.get('/api/companies', (req, res) => {
   db.all('SELECT * FROM companies', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
+  });
+});
+
+// === emptyruns CRUD ===
+app.get('/api/emptyruns', (req, res) => {
+  db.all('SELECT * FROM emptyruns', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+app.get('/api/emptyruns/:id', (req, res) => {
+  db.get('SELECT * FROM emptyruns WHERE emptyrun_id = ?', [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row);
+  });
+});
+app.post('/api/emptyruns', (req, res) => {
+  const e = req.body;
+  db.run(
+    `INSERT INTO emptyruns (vehicle_id, driver_id, origin, destination, departure_date, departure_time, arrival_time, available_weight, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [e.vehicle_id, e.driver_id, e.origin, e.destination, e.departure_date, e.departure_time, e.arrival_time, e.available_weight, e.status],
+    function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ emptyrun_id: this.lastID });
+    }
+  );
+});
+app.put('/api/emptyruns/:id', (req, res) => {
+  const e = req.body;
+  db.run(
+    `UPDATE emptyruns SET vehicle_id=?, driver_id=?, origin=?, destination=?, departure_date=?, departure_time=?, arrival_time=?, available_weight=?, status=? WHERE emptyrun_id=?`,
+    [e.vehicle_id, e.driver_id, e.origin, e.destination, e.departure_date, e.departure_time, e.arrival_time, e.available_weight, e.status, req.params.id],
+    function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ updated: this.changes });
+    }
+  );
+});
+app.delete('/api/emptyruns/:id', (req, res) => {
+  db.run('DELETE FROM emptyruns WHERE emptyrun_id = ?', [req.params.id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ deleted: this.changes });
   });
 });
 

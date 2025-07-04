@@ -120,7 +120,7 @@ const MatchingDashboard = () => {
                     </div>
                     <div>
                       <p className="text-slate-600 mb-1">
-                        <span className="font-medium">화물:</span> {item.cargoType || "-"} • {item.weight !== undefined ? `${item.weight}kg` : "-"}
+                        <span className="font-medium">화물:</span> {item.cargo || "-"} • {item.weight !== undefined ? `${item.weight}kg` : "-"}
                       </p>
                       <p className="text-slate-600">
                         <span className="font-medium">요청시간:</span> {item.requestTime ? new Date(item.requestTime).toLocaleString() : "정보 없음"}

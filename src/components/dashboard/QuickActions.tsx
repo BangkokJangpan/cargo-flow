@@ -1,8 +1,13 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dispatch, SetStateAction } from "react";
 
-const QuickActions = () => {
+interface QuickActionsProps {
+  setTab: Dispatch<SetStateAction<string>>;
+  setShipmentTab: Dispatch<SetStateAction<string>>;
+}
+
+const QuickActions = ({ setTab, setShipmentTab }: QuickActionsProps) => {
   return (
     <Card>
       <CardHeader>
@@ -10,7 +15,13 @@ const QuickActions = () => {
         <CardDescription>자주 사용하는 기능에 빠르게 접근</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => {
+            setTab("shipments");
+            setShipmentTab("create");
+          }}
+        >
           + 새 배송 요청 등록
         </Button>
         <Button variant="outline" className="w-full hover:bg-blue-50">

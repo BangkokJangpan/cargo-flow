@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,31 +8,41 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
-import { v4 as uuidv4 } from 'uuid';
 
-const ShipmentManager = () => {
+interface ShipmentManagerProps {
+  activeTab: string;
+  setActiveTab: Dispatch<SetStateAction<string>>;
+}
+
+const ShipmentManager = ({ activeTab, setActiveTab }: ShipmentManagerProps) => {
   // 기존 하드코딩 데이터 주석 처리
   // const [shipments] = useState([...]);
   const [shipments, setShipments] = useState([]);
   const [newShipment, setNewShipment] = useState({
     origin: "",
     destination: "",
-    cargoType: "",
+    cargo: "",
     weight: "",
     volume: "",
     requestedTime: "",
     specialInstructions: "",
     isUrgent: false,
-    shipper: "",
+    carrier_id: "",
     status: "",
     estimatedCost: "",
   });
   const [editId, setEditId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("list");
   const [shipment, setShipment] = useState(null);
   const [error, setError] = useState<string | null>(null);
+  const [carriers, setCarriers] = useState([]);
   
+  // carrier_id → carrierName 매핑 객체 생성
+  const carrierIdToName = Object.fromEntries(
+    carriers.map((c: any) => [String(c.carrier_id), c.carrierName])
+  );
+
   useEffect(() => {
+    axios.get("/api/carriers").then(res => setCarriers(Array.isArray(res.data) ? res.data : []));
     axios.get("/api/shipments").then(res => {
       // shipment_id 등 모든 필드가 보존되도록 그대로 저장
       setShipments(Array.isArray(res.data) ? res.data : []);
@@ -62,13 +72,13 @@ const ShipmentManager = () => {
         setNewShipment({
           origin: "",
           destination: "",
-          cargoType: "",
+          cargo: "",
           weight: "",
           volume: "",
           requestedTime: "",
           specialInstructions: "",
           isUrgent: false,
-          shipper: "",
+          carrier_id: "",
           status: "",
           estimatedCost: "",
         });
@@ -102,13 +112,13 @@ const ShipmentManager = () => {
     setNewShipment({
       origin: shipment.origin || "",
       destination: shipment.destination || "",
-      cargoType: shipment.cargoType || "",
+      cargo: shipment.cargo || "",
       weight: shipment.weight || "",
       volume: shipment.volume || "",
       requestedTime: shipment.requestedTime ? shipment.requestedTime.slice(0, 16) : "",
       specialInstructions: shipment.specialInstructions || "",
       isUrgent: shipment.isUrgent || false,
-      shipper: shipment.shipper || "",
+      carrier_id: shipment.carrier_id || "",
       status: shipment.status || "",
       estimatedCost: shipment.estimatedCost || "",
     });
@@ -168,9 +178,9 @@ const ShipmentManager = () => {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Badge className={`text-sm ${getStatusColor(shipment.status)}`}>{shipment.status}</Badge>
-                        {shipment.isUrgent && (
+                        {shipment.isUrgent === true || shipment.isUrgent === 1 ? (
                           <Badge className="bg-red-100 text-red-800 text-sm">🚨 긴급</Badge>
-                        )}
+                        ) : null}
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-lg text-green-600">
@@ -183,7 +193,7 @@ const ShipmentManager = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                       <div>
                         <p className="text-sm text-slate-600 mb-1">
-                          <span className="font-medium">화주:</span> {shipment.shipper}
+                          <span className="font-medium">화주:</span> {carrierIdToName[String(shipment.carrier_id)] || shipment.carrier_id}
                         </p>
                         <p className="text-sm text-slate-600 mb-1">
                           <span className="font-medium">출발:</span> {shipment.origin}
@@ -194,7 +204,7 @@ const ShipmentManager = () => {
                       </div>
                       <div>
                         <p className="text-sm text-slate-600 mb-1">
-                          <span className="font-medium">화물:</span> {shipment.cargoType}
+                          <span className="font-medium">화물:</span> {shipment.cargo}
                         </p>
                         <p className="text-sm text-slate-600 mb-1">
                           <span className="font-medium">중량/부피:</span> {shipment.weight}kg / {shipment.volume}m³
@@ -245,19 +255,25 @@ const ShipmentManager = () => {
             <CardContent>
               <form onSubmit={handleSubmitShipment} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="shipper">화주(회사)</Label>
-                  <Input
-                    id="shipper"
-                    name="shipper"
-                    placeholder="화주(회사)명 입력"
-                    value={newShipment.shipper}
-                    onChange={e => setNewShipment({ ...newShipment, shipper: e.target.value })}
-                  />
+                  <Label htmlFor="carrier_id">화주(회사)</Label>
+                  <Select
+                    value={newShipment.carrier_id}
+                    onValueChange={val => setNewShipment({ ...newShipment, carrier_id: val })}
+                  >
+                    <SelectTrigger id="carrier_id">
+                      <SelectValue placeholder="화주(회사) 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {carriers.map(c => (
+                        <SelectItem key={c.carrier_id} value={String(c.carrier_id)}>{c.carrierName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
                   <Select value={newShipment.status || ""} onValueChange={(value) => setNewShipment({...newShipment, status: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger id="status">
                       <SelectValue placeholder="상태 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -304,9 +320,9 @@ const ShipmentManager = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="cargoType">화물 종류</Label>
-                    <Select onValueChange={(value) => setNewShipment({...newShipment, cargoType: value})}>
-                      <SelectTrigger>
+                    <Label htmlFor="cargo">화물 종류</Label>
+                    <Select value={newShipment.cargo} onValueChange={(value) => setNewShipment({...newShipment, cargo: value})}>
+                      <SelectTrigger id="cargo">
                         <SelectValue placeholder="화물 종류 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -323,6 +339,7 @@ const ShipmentManager = () => {
                     <Label htmlFor="weight">중량 (kg)</Label>
                     <Input
                       id="weight"
+                      name="weight"
                       type="number"
                       placeholder="500"
                       value={newShipment.weight}
@@ -333,6 +350,7 @@ const ShipmentManager = () => {
                     <Label htmlFor="volume">부피 (m³)</Label>
                     <Input
                       id="volume"
+                      name="volume"
                       type="number"
                       step="0.1"
                       placeholder="2.5"
@@ -346,6 +364,7 @@ const ShipmentManager = () => {
                   <Label htmlFor="requestedTime">희망 수거 시간</Label>
                   <Input
                     id="requestedTime"
+                    name="requestedTime"
                     type="datetime-local"
                     value={newShipment.requestedTime}
                     onChange={(e) => setNewShipment({...newShipment, requestedTime: e.target.value})}
@@ -367,6 +386,7 @@ const ShipmentManager = () => {
                   <input
                     type="checkbox"
                     id="isUrgent"
+                    name="isUrgent"
                     checked={newShipment.isUrgent}
                     onChange={(e) => setNewShipment({...newShipment, isUrgent: e.target.checked})}
                   />

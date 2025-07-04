@@ -9,7 +9,7 @@ interface Delivery {
   destination: string;
   status: string;
   requestedTime: string;
-  cargoType: string;
+  cargo: string;
   weight: number;
 }
 
@@ -47,7 +47,7 @@ const UpcomingDeliveries = ({ deliveries }: UpcomingDeliveriesProps) => {
                   {delivery.origin} → {delivery.destination}
                 </p>
                 <p className="text-sm text-slate-600">
-                  {delivery.cargoType} • {delivery.weight}kg • {new Date(delivery.requestedTime).toLocaleString()}
+                  {delivery.cargo} • {delivery.weight}kg • {new Date(delivery.requestedTime).toLocaleString()}
                 </p>
               </div>
               <Button 
